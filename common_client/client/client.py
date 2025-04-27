@@ -1,6 +1,6 @@
 import httpx
 from httpx_sse import connect_sse
-from typing import Any, AsyncIterable
+from typing import Any, AsyncIterable, Optional
 from common.types import (
     AgentCard,
     GetTaskRequest,
@@ -31,9 +31,9 @@ class A2AClient:
         else:
             raise ValueError("Must provide either agent_card or url")
 
-    async def send_task(self, payload: dict[str, Any]) -> SendTaskResponse:
+    async def send_task(self, payload: dict[str, Any], timeout: Optional[int] = 30) -> SendTaskResponse:
         request = SendTaskRequest(params=payload)
-        return SendTaskResponse(**await self._send_request(request))
+        return SendTaskResponse(**await self._send_request(request, timeout))
 
     async def send_task_streaming(
         self, payload: dict[str, Any]
@@ -51,12 +51,12 @@ class A2AClient:
                 except httpx.RequestError as e:
                     raise A2AClientHTTPError(400, str(e)) from e
 
-    async def _send_request(self, request: JSONRPCRequest) -> dict[str, Any]:
+    async def _send_request(self, request: JSONRPCRequest, timeout) -> dict[str, Any]:
         async with httpx.AsyncClient() as client:
             try:
                 # Image generation could take time, adding timeout
                 response = await client.post(
-                    self.url, json=request.model_dump(), timeout=30
+                    self.url, json=request.model_dump(), timeout=timeout
                 )
                 response.raise_for_status()
                 return response.json()
