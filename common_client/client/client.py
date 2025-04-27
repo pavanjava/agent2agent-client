@@ -51,7 +51,7 @@ class A2AClient:
                 except httpx.RequestError as e:
                     raise A2AClientHTTPError(400, str(e)) from e
 
-    async def _send_request(self, request: JSONRPCRequest, timeout) -> dict[str, Any]:
+    async def _send_request(self, request: JSONRPCRequest, timeout: int) -> dict[str, Any]:
         async with httpx.AsyncClient() as client:
             try:
                 # Image generation could take time, adding timeout
